@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>传统节日问候 - 预览</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f8f8;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .date-display {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            margin: 0 auto 10px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .greeting-container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .greeting-video {
+            width: 100%;
+            border-radius: 8px;
+        }
+        .greeting-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+        .error-container {
+            text-align: center;
+            padding: 40px;
+            color: #ff4d4f;
+        }
+        .error-hint {
+            color: #999;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .no-greeting {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .radio-group {
+            margin-bottom: 15px;
+        }
+        .radio-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        .generate-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="date-display" id="today"></div>
+        <div id="content"></div>
+        <div id="generator" style="margin-top: 20px;">
+            <div class="form-group">
+                <span class="label">问候类型</span>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="type" value="dynamic-text-image" checked> 动态图文
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="type" value="video"> 视频
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <span class="label">节日类型</span>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="occasionType" value="solar-term" checked> 节气
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="occasionType" value="traditional-holiday"> 传统节日
+                    </label>
+                </div>
+            </div>
+            <button class="generate-btn" id="generateBtn">生成问候</button>
+        </div>
+    </div>
+    <script>
+        const API_BASE_URL = 'http://localhost:8080';
+        
+        function isMorningTime() {
+            const now = new Date();
+            const hour = now.getHours();
+            return hour >= 5 && hour < 12;
+        }
+
+        function updateDateTime() {
+            const today = new Date().toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('today').textContent = today;
+        }
+
+        function showLoading() {
+            document.getElementById('content').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div>正在获取今日问候...</div>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            document.getElementById('content').innerHTML = `
+                <div class="error-container">
+                    <div>${message}</div>
+                    ${!isMorningTime() ? '<div class="error-hint">请在早上5点到12点之间查看问候</div>' : ''}
+                </div>
+            `;
+        }
+
+        function showGreeting(greeting) {
+            if (!greeting) {
+                document.getElementById('content').innerHTML = `
+                    <div class="no-greeting">
+                        <div>今天暂无问候</div>
+                        <div class="error-hint">点击下方按钮生成新问候</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const container = document.createElement('div');
+            container.className = 'greeting-container';
+            
+            if (greeting.type === 'video') {
+                container.innerHTML = `
+                    <video src="${greeting.content}" controls class="greeting-video">
+                        您的浏览器不支持视频播放
+                    </video>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="greeting-text">${greeting.content}</div>
+                `;
+            }
+            
+            document.getElementById('content').innerHTML = '';
+            document.getElementById('content').appendChild(container);
+        }
+
+        async function loadTodayGreeting() {
+            if (!isMorningTime()) {
+                showError('不在早上时段');
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/greetings/today`);
+                if (!response.ok) throw new Error('获取问候失败');
+                const greeting = await response.json();
+                showGreeting(greeting);
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function generateGreeting() {
+            if (!isMorningTime()) {
+                showError('不在早上时段');
+                return;
+            }
+
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const occasionType = document.querySelector('input[name="occasionType"]:checked').value;
+            const generateBtn = document.getElementById('generateBtn');
+            
+            generateBtn.disabled = true;
+            generateBtn.textContent = '正在生成...';
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/greetings/generate?type=${type}&occasionType=${occasionType}`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('生成问候失败');
+                const greeting = await response.json();
+                showGreeting(greeting);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '生成问候';
+            }
+        }
+
+        // Initialize
+        updateDateTime();
+        loadTodayGreeting();
+        document.getElementById('generateBtn').addEventListener('click', generateGreeting);
+    </script>
+</body>
+</html>
