@@ -1,6 +1,11 @@
 // Test script for frontend functionality
+import fetch from 'node-fetch';
+import { base64Encode } from './utils/base64.js';
+
+const API_BASE_URL = 'http://localhost:8080';
+const API_CREDENTIALS = 'Basic ' + base64Encode('user:bfa7173496abb193cecf4a81d4b6fca4');
+
 const testFrontend = async () => {
-  const apiBaseUrl = 'http://localhost:8080';
   let hasErrors = false;
 
   console.log('Starting API Integration Tests\n');
@@ -23,7 +28,11 @@ const testFrontend = async () => {
   try {
     // 1. Test /api/calendar/today endpoint
     console.log('Testing GET /api/calendar/today...');
-    const calendarResponse = await fetch(`${apiBaseUrl}/api/calendar/today`);
+    const calendarResponse = await fetch(`${API_BASE_URL}/api/calendar/today`, {
+      headers: {
+        'Authorization': API_CREDENTIALS
+      }
+    });
     if (!calendarResponse.ok) {
       throw new Error(`Calendar API failed: ${calendarResponse.status} ${calendarResponse.statusText}`);
     }
@@ -34,7 +43,11 @@ const testFrontend = async () => {
 
     // 2. Test /api/greetings/templates endpoint
     console.log('Testing GET /api/greetings/templates...');
-    const templatesResponse = await fetch(`${apiBaseUrl}/api/greetings/templates`);
+    const templatesResponse = await fetch(`${API_BASE_URL}/api/greetings/templates`, {
+      headers: {
+        'Authorization': API_CREDENTIALS
+      }
+    });
     if (!templatesResponse.ok) {
       throw new Error(`Templates API failed: ${templatesResponse.status} ${templatesResponse.statusText}`);
     }
@@ -56,14 +69,13 @@ const testFrontend = async () => {
     for (const testCase of testCases) {
       console.log(`Testing POST /api/greetings/generate with ${testCase.type} for ${testCase.occasionType}...`);
       const greetingResponse = await fetch(
-        `${apiBaseUrl}/api/greetings/generate`,
+        `${API_BASE_URL}/api/greetings/generate?type=${testCase.type}&occasionType=${testCase.occasionType}`,
         {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(testCase)
+            'Authorization': API_CREDENTIALS
+          }
         }
       );
 

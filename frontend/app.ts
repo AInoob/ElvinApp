@@ -1,5 +1,5 @@
 App({
   globalData: {
-    apiBaseUrl: 'http://localhost:8080'
+    apiBaseUrl: 'https://wechat-holiday-app-tunnel-q2snk5w0.devinapps.com'
   }
 })
