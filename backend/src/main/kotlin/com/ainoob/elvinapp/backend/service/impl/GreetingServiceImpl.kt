@@ -5,6 +5,7 @@ import com.ainoob.elvinapp.backend.repository.*
 import com.ainoob.elvinapp.backend.service.GreetingService
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import org.json.JSONObject
@@ -42,12 +43,12 @@ class GreetingServiceImpl(
         val (occasionId, occasionName) = when (occasionType) {
             "solar-term" -> {
                 val term = solarTermRepository.findAll().find { it.date == today }
-                    ?: throw IllegalStateException("No solar term found for today")
+                    ?: return generateDefaultGreeting(type, "solar-term")
                 Pair(term.id, term.name)
             }
             "traditional-holiday" -> {
                 val holiday = traditionalHolidayRepository.findAll().find { it.date == today }
-                    ?: throw IllegalStateException("No traditional holiday found for today")
+                    ?: return generateDefaultGreeting(type, "traditional-holiday")
                 Pair(holiday.id, holiday.name)
             }
             else -> throw IllegalArgumentException("Invalid occasion type: $occasionType")
@@ -79,4 +80,23 @@ class GreetingServiceImpl(
 
     override fun getTemplates(): List<GreetingTemplate> =
         greetingTemplateRepository.findAll()
+
+    private fun generateDefaultGreeting(type: String, occasionType: String): GeneratedGreeting {
+        val today = LocalDate.now().format(dateFormatter)
+        val timePrefix = getTimeBasedPrefix()
+        val defaultContent = when (occasionType) {
+            "solar-term" -> "${timePrefix}今天虽然不是节气，但也要开开心心哦！"
+            "traditional-holiday" -> "${timePrefix}虽然今天不是传统节日，但祝您天天快乐！"
+            else -> throw IllegalArgumentException("Invalid occasion type")
+        }
+
+        return GeneratedGreeting(
+            id = UUID.randomUUID().toString(),
+            date = today,
+            occasionId = UUID.randomUUID().toString(), // Generate a placeholder ID
+            occasionType = occasionType,
+            content = defaultContent,
+            type = type
+        ).also { generatedGreetingRepository.save(it) }
+    }
 }

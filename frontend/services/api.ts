@@ -1,6 +1,8 @@
 import { GeneratedGreeting, GreetingTemplate, SolarTerm, TraditionalHoliday } from '../typings/types/index';
+import { base64Encode } from '../utils/base64';
 
 const app = getApp<WechatMiniprogram.IAppOption>();
+const AUTH_HEADER = 'Basic ' + base64Encode('user:bfa7173496abb193cecf4a81d4b6fca4');
 
 export async function getTodayGreeting(): Promise<GeneratedGreeting | null> {
   try {
@@ -8,6 +10,9 @@ export async function getTodayGreeting(): Promise<GeneratedGreeting | null> {
       wx.request({
         url: `${app.globalData.apiBaseUrl}/api/greetings/today`,
         method: 'GET',
+        header: {
+          'Authorization': AUTH_HEADER
+        },
         success: resolve,
         fail: reject
       });
@@ -34,6 +39,9 @@ export async function generateGreeting(
         url: `${app.globalData.apiBaseUrl}/api/greetings/generate`,
         method: 'POST',
         data: { type, occasionType },
+        header: {
+          'Authorization': AUTH_HEADER
+        },
         success: resolve,
         fail: reject
       });
@@ -56,6 +64,9 @@ export async function getTemplates(): Promise<GreetingTemplate[]> {
       wx.request({
         url: `${app.globalData.apiBaseUrl}/api/greetings/templates`,
         method: 'GET',
+        header: {
+          'Authorization': AUTH_HEADER
+        },
         success: resolve,
         fail: reject
       });
@@ -84,6 +95,9 @@ export async function getTodaySpecialDates(): Promise<{
       wx.request({
         url: `${app.globalData.apiBaseUrl}/api/calendar/today`,
         method: 'GET',
+        header: {
+          'Authorization': AUTH_HEADER
+        },
         success: resolve,
         fail: reject
       });
