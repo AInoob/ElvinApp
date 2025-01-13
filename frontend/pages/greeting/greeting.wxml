@@ -1,0 +1,38 @@
+<view class="container">
+  <view class="form-group">
+    <text class="label">选择问候类型</text>
+    <radio-group class="radio-group" bindchange="onTypeChange">
+      <label class="radio-label">
+        <radio value="dynamic-text-image" checked="{{type === 'dynamic-text-image'}}" color="#4CAF50" />
+        <text>动态图文问候</text>
+      </label>
+      <label class="radio-label">
+        <radio value="video" checked="{{type === 'video'}}" color="#4CAF50" />
+        <text>视频问候</text>
+      </label>
+    </radio-group>
+  </view>
+
+  <view class="form-group">
+    <text class="label">选择节日类型</text>
+    <radio-group class="radio-group" bindchange="onOccasionTypeChange">
+      <label class="radio-label">
+        <radio value="solar-term" checked="{{occasionType === 'solar-term'}}" color="#4CAF50" />
+        <text>二十四节气</text>
+      </label>
+      <label class="radio-label">
+        <radio value="traditional-holiday" checked="{{occasionType === 'traditional-holiday'}}" color="#4CAF50" />
+        <text>传统节日</text>
+      </label>
+    </radio-group>
+  </view>
+
+  <button 
+    class="generate-btn" 
+    bindtap="generateGreeting"
+    loading="{{generating}}"
+    disabled="{{generating}}"
+  >
+    {{generating ? '正在生成...' : '生成节日问候'}}
+  </button>
+</view>

@@ -19,6 +19,17 @@ class GreetingServiceImpl(
 
     private val dateFormatter = DateTimeFormatter.ofPattern("MMdd")
 
+    private fun getTimeBasedPrefix(): String {
+        val hour = LocalDateTime.now().hour
+        return when (hour) {
+            in 5..11 -> "早上好！"
+            in 12..13 -> "中午好！"
+            in 14..17 -> "下午好！"
+            in 18..23 -> "晚上好！"
+            else -> "夜深了！"
+        }
+    }
+
     override fun getTodayGreeting(): GeneratedGreeting? {
         val today = LocalDate.now().format(dateFormatter)
         return generatedGreetingRepository.findAll().find { it.date == today }
@@ -27,32 +38,39 @@ class GreetingServiceImpl(
     override fun generateGreeting(type: String, occasionType: String): GeneratedGreeting {
         val today = LocalDate.now().format(dateFormatter)
         
-        // Find today's special occasion
-        val occasion = when (occasionType) {
-            "solar-term" -> solarTermRepository.findAll().find { it.date == today }
-            "traditional-holiday" -> traditionalHolidayRepository.findAll().find { it.date == today }
-            else -> throw IllegalArgumentException("Invalid occasion type")
-        } ?: throw IllegalStateException("No $occasionType found for today")
+        // Find special occasion and its properties
+        val (occasionId, occasionName) = when (occasionType) {
+            "solar-term" -> {
+                val term = solarTermRepository.findAll().find { it.date == today }
+                    ?: throw IllegalStateException("No solar term found for today")
+                Pair(term.id, term.name)
+            }
+            "traditional-holiday" -> {
+                val holiday = traditionalHolidayRepository.findAll().find { it.date == today }
+                    ?: throw IllegalStateException("No traditional holiday found for today")
+                Pair(holiday.id, holiday.name)
+            }
+            else -> throw IllegalArgumentException("Invalid occasion type: $occasionType")
+        }
 
         // Find appropriate template
         val template = greetingTemplateRepository.findAll()
             .find { it.type == type && it.occasionType == occasionType }
             ?: throw IllegalStateException("No template found for type: $type and occasion: $occasionType")
 
-        // Generate greeting content
-        val variables = JSONObject(template.variables ?: "{}")
-        when (occasionType) {
-            "solar-term" -> variables.put("solar_term", occasion.name)
-            "traditional-holiday" -> variables.put("holiday", occasion.name)
+        // Generate greeting content with time-based prefix
+        val timePrefix = getTimeBasedPrefix()
+        val content = timePrefix + when (occasionType) {
+            "solar-term" -> template.templateContent.replace("{solar_term}", occasionName)
+            "traditional-holiday" -> template.templateContent.replace("{holiday}", occasionName)
+            else -> throw IllegalArgumentException("Invalid occasion type")
         }
-        
-        val content = template.templateContent.format(variables)
 
         // Create and save greeting
         return GeneratedGreeting(
             id = UUID.randomUUID().toString(),
             date = today,
-            occasionId = occasion.id,
+            occasionId = occasionId,
             occasionType = occasionType,
             content = content,
             type = type

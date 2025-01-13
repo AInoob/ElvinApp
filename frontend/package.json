@@ -1,0 +1,12 @@
+{
+  "name": "traditional-greetings",
+  "version": "1.0.0",
+  "description": "WeChat Mini Program for Traditional Greetings",
+  "scripts": {
+    "compile": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "miniprogram-api-typings": "^3.12.2"
+  }
+}
