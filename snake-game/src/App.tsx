@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Button } from "@/components/ui/button"
 import { Play, Pause, RotateCcw } from 'lucide-react'
 import './App.css'
@@ -15,11 +15,11 @@ interface SnakeSegmentStyle {
   imgSrc: string;
 }
 
-function getSnakeSegmentStyle(currentPos: Position, snake: Position[]): SnakeSegmentStyle {
+const getSnakeSegmentStyle = (currentPos: Position, snake: Position[]): SnakeSegmentStyle => {
   const isHead = currentPos.x === snake[0].x && currentPos.y === snake[0].y;
   const isTail = currentPos.x === snake[snake.length - 1].x && currentPos.y === snake[snake.length - 1].y;
   
-  const baseStyle = "absolute inset-0 transition-transform duration-100";
+  const baseStyle = "absolute inset-0";
   let rotation = 0;
   
   if (isHead && snake.length > 1) {
@@ -32,12 +32,49 @@ function getSnakeSegmentStyle(currentPos: Position, snake: Position[]): SnakeSeg
   
   return {
     className: `${baseStyle} flex items-center justify-center`,
-    style: {
+    style: isHead ? {
       transform: `rotate(${rotation}deg)`,
-    },
+    } : {},
     imgSrc: isHead ? snakeHead : isTail ? snakeTail : snakeBody
   };
-}
+};
+
+const GridCell = memo(({ isSnake, isFood, segmentType, rotation }: { 
+  isSnake: boolean, 
+  isFood: boolean, 
+  segmentType?: 'head' | 'body' | 'tail',
+  rotation?: number 
+}) => {
+  const getSegmentImage = () => {
+    switch (segmentType) {
+      case 'head': return snakeHead;
+      case 'tail': return snakeTail;
+      case 'body': return snakeBody;
+      default: return '';
+    }
+  };
+
+  return (
+    <div
+      className={`w-6 h-6 relative ${
+        isFood ? 'bg-gradient-to-br from-red-500 to-red-700 rounded-full shadow-lg shadow-red-500/50 scale-75' : ''
+      }`}
+    >
+      {isSnake && (
+        <div
+          className="absolute inset-0 flex items-center justify-center transform-gpu"
+          style={rotation !== undefined ? { transform: `rotate(${rotation}deg)` } : {}}
+        >
+          <img 
+            src={getSegmentImage()} 
+            alt="snake segment"
+            className="w-full h-full object-contain will-change-transform"
+          />
+        </div>
+      )}
+    </div>
+  );
+});
 
 function App() {
   const GRID_SIZE = 20
@@ -53,6 +90,45 @@ function App() {
   const [score, setScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [lastMoveTime, setLastMoveTime] = useState(Date.now())
+  
+  const gridCells = useMemo(() => (
+    Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, index) => {
+      const x = index % GRID_SIZE;
+      const y = Math.floor(index / GRID_SIZE);
+      const isSnake = snake.some(segment => segment.x === x && segment.y === y);
+      const isFood = food.x === x && food.y === y;
+      
+      let segmentType: 'head' | 'body' | 'tail' | undefined;
+      let rotation: number | undefined;
+      
+      if (isSnake) {
+        if (x === snake[0].x && y === snake[0].y) {
+          segmentType = 'head';
+          if (snake.length > 1) {
+            const [head, neck] = snake;
+            if (head.x < neck.x) rotation = 180;
+            else if (head.x > neck.x) rotation = 0;
+            else if (head.y < neck.y) rotation = -90;
+            else if (head.y > neck.y) rotation = 90;
+          }
+        } else if (x === snake[snake.length - 1].x && y === snake[snake.length - 1].y) {
+          segmentType = 'tail';
+        } else {
+          segmentType = 'body';
+        }
+      }
+      
+      return (
+        <GridCell
+          key={index}
+          isSnake={isSnake}
+          isFood={isFood}
+          segmentType={segmentType}
+          rotation={rotation}
+        />
+      );
+    })
+  ), [snake, food, GRID_SIZE])
 
   const generateFood = useCallback(() => {
     const newFood = {
@@ -172,7 +248,7 @@ function App() {
             gridTemplateRows: `repeat(${GRID_SIZE}, ${CELL_SIZE}px)`
           }}
         >
-          {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, index) => {
+          {gridCells}
             const x = index % GRID_SIZE
             const y = Math.floor(index / GRID_SIZE)
             const isSnake = snake.some(segment => segment.x === x && segment.y === y)
@@ -199,7 +275,6 @@ function App() {
                 )}
               </div>
             )
-          })}
         </div>
 
         {gameOver && (
