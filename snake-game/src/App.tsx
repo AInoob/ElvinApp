@@ -9,36 +9,6 @@ import snakeTail from './assets/snake-tail.svg'
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 type Position = { x: number; y: number }
 
-interface SnakeSegmentStyle {
-  className: string;
-  style: React.CSSProperties;
-  imgSrc: string;
-}
-
-const getSnakeSegmentStyle = (currentPos: Position, snake: Position[]): SnakeSegmentStyle => {
-  const isHead = currentPos.x === snake[0].x && currentPos.y === snake[0].y;
-  const isTail = currentPos.x === snake[snake.length - 1].x && currentPos.y === snake[snake.length - 1].y;
-  
-  const baseStyle = "absolute inset-0";
-  let rotation = 0;
-  
-  if (isHead && snake.length > 1) {
-    const [head, neck] = snake;
-    if (head.x < neck.x) rotation = 180;
-    else if (head.x > neck.x) rotation = 0;
-    else if (head.y < neck.y) rotation = -90;
-    else if (head.y > neck.y) rotation = 90;
-  }
-  
-  return {
-    className: `${baseStyle} flex items-center justify-center`,
-    style: isHead ? {
-      transform: `rotate(${rotation}deg)`,
-    } : {},
-    imgSrc: isHead ? snakeHead : isTail ? snakeTail : snakeBody
-  };
-};
-
 const GridCell = memo(({ isSnake, isFood, segmentType, rotation }: { 
   isSnake: boolean, 
   isFood: boolean, 
@@ -249,32 +219,6 @@ function App() {
           }}
         >
           {gridCells}
-            const x = index % GRID_SIZE
-            const y = Math.floor(index / GRID_SIZE)
-            const isSnake = snake.some(segment => segment.x === x && segment.y === y)
-            const isFood = food.x === x && food.y === y
-            
-            return (
-              <div
-                key={index}
-                className={`w-6 h-6 relative ${
-                  isFood ? 'bg-gradient-to-br from-red-500 to-red-700 rounded-full shadow-lg shadow-red-500/50 animate-pulse scale-75' : ''
-                }`}
-              >
-                {isSnake && (
-                  <div
-                    className={getSnakeSegmentStyle({ x, y }, snake).className}
-                    style={getSnakeSegmentStyle({ x, y }, snake).style}
-                  >
-                    <img 
-                      src={getSnakeSegmentStyle({ x, y }, snake).imgSrc} 
-                      alt="snake segment"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                )}
-              </div>
-            )
         </div>
 
         {gameOver && (
