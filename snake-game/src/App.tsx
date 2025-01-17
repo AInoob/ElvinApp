@@ -9,7 +9,13 @@ import snakeTail from './assets/snake-tail.svg'
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 type Position = { x: number; y: number }
 
-function getSnakeSegmentStyle(currentPos: Position, snake: Position[]): { className: string; style: React.CSSProperties } {
+interface SnakeSegmentStyle {
+  className: string;
+  style: React.CSSProperties;
+  imgSrc: string;
+}
+
+function getSnakeSegmentStyle(currentPos: Position, snake: Position[]): SnakeSegmentStyle {
   const isHead = currentPos.x === snake[0].x && currentPos.y === snake[0].y;
   const isTail = currentPos.x === snake[snake.length - 1].x && currentPos.y === snake[snake.length - 1].y;
   
@@ -25,14 +31,11 @@ function getSnakeSegmentStyle(currentPos: Position, snake: Position[]): { classN
   }
   
   return {
-    className: baseStyle,
+    className: `${baseStyle} flex items-center justify-center`,
     style: {
-      backgroundImage: `url(${isHead ? snakeHead : isTail ? snakeTail : snakeBody})`,
-      backgroundSize: '100%',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
       transform: `rotate(${rotation}deg)`,
-    }
+    },
+    imgSrc: isHead ? snakeHead : isTail ? snakeTail : snakeBody
   };
 }
 
@@ -186,7 +189,13 @@ function App() {
                   <div
                     className={getSnakeSegmentStyle({ x, y }, snake).className}
                     style={getSnakeSegmentStyle({ x, y }, snake).style}
-                  />
+                  >
+                    <img 
+                      src={getSnakeSegmentStyle({ x, y }, snake).imgSrc} 
+                      alt="snake segment"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                 )}
               </div>
             )
