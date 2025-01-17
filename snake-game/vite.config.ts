@@ -9,5 +9,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  assetsInclude: ['**/*.svg'],
+  build: {
+    assetsInlineLimit: 0, // Force SVG files to be copied rather than inlined
+  },
 })
 

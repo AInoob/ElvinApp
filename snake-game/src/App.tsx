@@ -2,12 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Play, Pause, RotateCcw } from 'lucide-react'
 import './App.css'
-// @ts-ignore
-import snakeHead from './assets/snake-head.svg?url'
-// @ts-ignore
-import snakeBody from './assets/snake-body.svg?url'
-// @ts-ignore
-import snakeTail from './assets/snake-tail.svg?url'
+import snakeHead from './assets/snake-head.svg'
+import snakeBody from './assets/snake-body.svg'
+import snakeTail from './assets/snake-tail.svg'
 
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 type Position = { x: number; y: number }
