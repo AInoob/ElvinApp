@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Base body shape -->
+  <path d="M5 20C5 12.8203 10.8203 7 18 7H22C29.1797 7 35 12.8203 35 20C35 27.1797 29.1797 33 22 33H18C10.8203 33 5 27.1797 5 20Z" fill="url(#body-gradient)"/>
+  
+  <!-- Scale pattern -->
+  <path d="M15 15C15 17.7614 12.7614 20 10 20C12.7614 20 15 22.2386 15 25C15 22.2386 17.2386 20 20 20C17.2386 20 15 17.7614 15 15Z" fill="url(#scale-gradient)" opacity="0.3"/>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="body-gradient" x1="20" y1="7" x2="20" y2="33" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10b981"/>
+      <stop offset="1" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="scale-gradient" x1="15" y1="15" x2="15" y2="25" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>
