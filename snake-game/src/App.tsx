@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react'
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Play, Pause, RotateCcw } from 'lucide-react'
 import './App.css'
@@ -59,7 +59,7 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [score, setScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
-  const [lastMoveTime, setLastMoveTime] = useState(Date.now())
+  const inputQueueRef = useRef<Direction[]>([])
   
   const gridCells = useMemo(() => (
     Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, index) => {
@@ -119,11 +119,17 @@ function App() {
   const moveSnake = useCallback(() => {
     if (gameOver) return
 
+    // Process next direction from queue if available
+    if (inputQueueRef.current.length > 0) {
+      setDirection(inputQueueRef.current.shift()!);
+    }
+
     setSnake(prevSnake => {
       const head = prevSnake[0]
       const newHead = { ...head }
+      const currentDirection = direction // Capture current direction to ensure consistency
 
-      switch (direction) {
+      switch (currentDirection) {
         case 'UP':
           newHead.y = (newHead.y - 1 + GRID_SIZE) % GRID_SIZE
           break
@@ -138,65 +144,60 @@ function App() {
           break
       }
 
-      // Check if snake hits itself
-      if (prevSnake.some(segment => segment.x === newHead.x && segment.y === newHead.y)) {
-        setGameOver(true)
-        return prevSnake
-      }
-
-      const newSnake = [newHead, ...prevSnake]
+      // First, determine if snake will grow
+      const willGrow = newHead.x === food.x && newHead.y === food.y;
       
-      // Check if snake eats food
-      if (newHead.x === food.x && newHead.y === food.y) {
-        setScore(prev => prev + 1)
-        generateFood()
-      } else {
-        newSnake.pop()
+      // Create new snake body, removing tail if not growing
+      const newBody = willGrow ? prevSnake : prevSnake.slice(0, -1);
+      
+      // Check for collision with current body (not including future head position)
+      if (newBody.some(segment => segment.x === newHead.x && segment.y === newHead.y)) {
+        setGameOver(true);
+        return prevSnake;
       }
-
+      
+      // If we reach here, movement is valid
+      const newSnake = [newHead, ...newBody];
+      
+      // Handle food consumption after confirming valid movement
+      if (willGrow) {
+        setScore(prev => prev + 1);
+        generateFood();
+      }
+      
       return newSnake
     })
   }, [direction, food, gameOver, generateFood])
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      const now = Date.now();
-      const timeSinceLastMove = now - lastMoveTime;
+      let newDirection: Direction | null = null;
       
-      // Allow immediate direction change if enough time has passed
-      if (timeSinceLastMove >= GAME_SPEED * 0.5) {
-        switch (e.key) {
-          case 'ArrowUp':
-            if (direction !== 'DOWN') {
-              setDirection('UP');
-              setLastMoveTime(now);
-            }
-            break;
-          case 'ArrowDown':
-            if (direction !== 'UP') {
-              setDirection('DOWN');
-              setLastMoveTime(now);
-            }
-            break;
-          case 'ArrowLeft':
-            if (direction !== 'RIGHT') {
-              setDirection('LEFT');
-              setLastMoveTime(now);
-            }
-            break;
-          case 'ArrowRight':
-            if (direction !== 'LEFT') {
-              setDirection('RIGHT');
-              setLastMoveTime(now);
-            }
-            break;
-        }
+      // Determine new direction based on key press
+      switch (e.key) {
+        case 'ArrowUp':
+          if (direction !== 'DOWN') newDirection = 'UP';
+          break;
+        case 'ArrowDown':
+          if (direction !== 'UP') newDirection = 'DOWN';
+          break;
+        case 'ArrowLeft':
+          if (direction !== 'RIGHT') newDirection = 'LEFT';
+          break;
+        case 'ArrowRight':
+          if (direction !== 'LEFT') newDirection = 'RIGHT';
+          break;
+      }
+      
+      // If valid direction change, add to queue
+      if (newDirection !== null) {
+        inputQueueRef.current.push(newDirection);
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [direction, lastMoveTime, GAME_SPEED])
+  }, [direction])
 
   useEffect(() => {
     if (!isPlaying) return
