@@ -120,8 +120,26 @@ function App() {
     if (gameOver) return
 
     // Process next direction from queue if available
+    let nextDirection = direction;
     if (inputQueueRef.current.length > 0) {
-      setDirection(inputQueueRef.current.shift()!);
+      // Get the next valid direction from the queue
+      while (inputQueueRef.current.length > 0) {
+        const candidateDirection = inputQueueRef.current[0];
+        const isValid = (
+          (candidateDirection === 'UP' && nextDirection !== 'DOWN') ||
+          (candidateDirection === 'DOWN' && nextDirection !== 'UP') ||
+          (candidateDirection === 'LEFT' && nextDirection !== 'RIGHT') ||
+          (candidateDirection === 'RIGHT' && nextDirection !== 'LEFT')
+        );
+        if (isValid) {
+          nextDirection = inputQueueRef.current.shift()!;
+          break;
+        } else {
+          // Remove invalid direction
+          inputQueueRef.current.shift();
+        }
+      }
+      setDirection(nextDirection);
     }
 
     setSnake(prevSnake => {
@@ -147,17 +165,15 @@ function App() {
       // First, determine if snake will grow
       const willGrow = newHead.x === food.x && newHead.y === food.y;
       
-      // Create new snake body, removing tail if not growing
+      // Create new snake with updated head position
       const newBody = willGrow ? prevSnake : prevSnake.slice(0, -1);
+      const newSnake = [newHead, ...newBody];
       
-      // Check for collision with current body (not including future head position)
+      // Check for collision with updated body (excluding head)
       if (newBody.some(segment => segment.x === newHead.x && segment.y === newHead.y)) {
         setGameOver(true);
         return prevSnake;
       }
-      
-      // If we reach here, movement is valid
-      const newSnake = [newHead, ...newBody];
       
       // Handle food consumption after confirming valid movement
       if (willGrow) {
