@@ -16,7 +16,7 @@ function getSnakeSegmentStyle(currentPos: Position, snake: Position[]): { classN
   const isHead = currentPos.x === snake[0].x && currentPos.y === snake[0].y;
   const isTail = currentPos.x === snake[snake.length - 1].x && currentPos.y === snake[snake.length - 1].y;
   
-  const baseStyle = "w-full h-full transition-transform duration-100";
+  const baseStyle = "absolute inset-0 transition-transform duration-100";
   let rotation = 0;
   
   if (isHead && snake.length > 1) {
@@ -31,7 +31,7 @@ function getSnakeSegmentStyle(currentPos: Position, snake: Position[]): { classN
     className: baseStyle,
     style: {
       backgroundImage: `url(${isHead ? snakeHead : isTail ? snakeTail : snakeBody})`,
-      backgroundSize: 'contain',
+      backgroundSize: '100%',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
       transform: `rotate(${rotation}deg)`,
@@ -181,7 +181,7 @@ function App() {
             return (
               <div
                 key={index}
-                className={`w-6 h-6 ${
+                className={`w-6 h-6 relative ${
                   isFood ? 'bg-gradient-to-br from-red-500 to-red-700 rounded-full shadow-lg shadow-red-500/50 animate-pulse scale-75' : ''
                 }`}
               >
